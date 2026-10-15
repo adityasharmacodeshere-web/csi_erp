@@ -92,22 +92,39 @@ All values are computed at read-time from raw scan events and database records:
 npm install
 ```
 
-### 2. Initialize Database & Run Seed
+`npm install` generates the Prisma Client automatically. If you install with lifecycle scripts disabled, run `npx prisma generate` before starting the app.
+
+### 2. Create Your Local Environment File
+
+The database connection and session settings are intentionally not committed. Copy the provided template once:
+
 ```bash
-npx prisma db push
-npx tsx prisma/seed.ts
+# macOS / Linux
+cp .env.example .env
+
+# Windows PowerShell
+Copy-Item .env.example .env
 ```
 
-### 3. Run Automated Verification Tests
+### 3. Initialize Database & Run Seed
+```bash
+npx prisma db push
+npx prisma db seed
+```
+
+### 4. Run Automated Verification Tests
 ```bash
 npx tsx prisma/verify.ts
 ```
 
-### 4. Start Development Server
+### 5. Start Development Server
 ```bash
 npm run dev
 ```
 Open [http://localhost:3000](http://localhost:3000) in your browser.
+
+> [!IMPORTANT]
+> This is a Next.js App Router application, not a static HTML site. Its `/` route is implemented by `src/app/page.tsx`, so it must be served with `npm run dev` (or `npm run build` followed by `npm start`), not opened with Live Server. Do not add an `index.html` file: it would not be used by Next.js and would mask the actual application route.
 
 ---
 
