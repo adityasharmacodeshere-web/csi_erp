@@ -1,0 +1,130 @@
+datasource db {
+  provider = "sqlite"
+  url      = env("DATABASE_URL")
+}
+
+generator client {
+  provider = "prisma-client-js"
+}
+
+model Student {
+  id             String          @id @default(cuid())
+  enrollmentNo   String          @unique // stored lowercase
+  passwordHash   String
+  name           String
+  program        String          // e.g. "B.Tech CSE"
+  semester       Int
+  createdAt      DateTime        @default(now())
+  scanEvents     ScanEvent[]
+  roomBookings   RoomBooking[]
+  groundBookings GroundBooking[]
+  issuedBooks    IssuedBook[]
+  laundryOrders  LaundryOrder[]
+  messScans      MessScan[]
+}
+
+model ScanEvent {
+  id           String    @id @default(cuid())
+  studentId    String
+  student      Student   @relation(fields: [studentId], references: [id])
+  location     String    // LIBRARY | SPORTS | MESS
+  direction    String    // IN | OUT
+  timestamp    DateTime
+  autoClosedAt DateTime? // set if auto-closed at midnight
+  createdAt    DateTime  @default(now())
+}
+
+model DiscussionRoom {
+  id       String        @id @default(cuid())
+  name     String        // e.g. "Discussion Room A", "Discussion Room B"
+  capacity Int
+  bookings RoomBooking[]
+}
+
+model RoomBooking {
+  id        String         @id @default(cuid())
+  roomId    String
+  room      DiscussionRoom @relation(fields: [roomId], references: [id])
+  studentId String
+  student   Student        @relation(fields: [studentId], references: [id])
+  date      DateTime       // date of booking (start of day)
+  slotStart String         // e.g. "10:00"
+  slotEnd   String         // e.g. "11:00"
+  status    String         @default("ACTIVE") // ACTIVE | CANCELLED
+  createdAt DateTime       @default(now())
+
+  @@unique([roomId, date, slotStart, status])
+}
+
+model IssuedBook {
+  id         String    @id @default(cuid())
+  studentId  String
+  student    Student   @relation(fields: [studentId], references: [id])
+  title      String
+  author     String
+  issueDate  DateTime
+  dueDate    DateTime
+  returnedAt DateTime?
+  finePerDay Float     @default(2.0) // Rs 2/day
+  loanDays   Int       @default(14)
+}
+
+model Sport {
+  id      String   @id @default(cuid())
+  name    String   // e.g. "Cricket", "Football", etc.
+  grounds Ground[]
+}
+
+model Ground {
+  id       String          @id @default(cuid())
+  name     String          // e.g. "Cricket Ground", "Practice Nets"
+  sportId  String
+  sport    Sport           @relation(fields: [sportId], references: [id])
+  bookings GroundBooking[]
+}
+
+model GroundBooking {
+  id        String   @id @default(cuid())
+  groundId  String
+  ground    Ground   @relation(fields: [groundId], references: [id])
+  studentId String
+  student   Student  @relation(fields: [studentId], references: [id])
+  date      DateTime // date of booking
+  slotStart String   // e.g. "17:00"
+  slotEnd   String   // e.g. "18:00"
+  status    String   @default("ACTIVE") // ACTIVE | CANCELLED
+  createdAt DateTime @default(now())
+
+  @@unique([groundId, date, slotStart, status])
+}
+
+model LaundryOrder {
+  id           String    @id @default(cuid())
+  studentId    String
+  student      Student   @relation(fields: [studentId], references: [id])
+  clothesCount Int
+  givenDate    DateTime
+  dueDate      DateTime
+  status       String    // RECEIVED | WASHING | READY | COLLECTED
+  collectedAt  DateTime?
+  createdAt    DateTime  @default(now())
+}
+
+model MessMenu {
+  id        String @id @default(cuid())
+  dayOfWeek Int    // 0=Sunday ... 6=Saturday
+  meal      String // BREAKFAST | LUNCH | SNACKS | DINNER
+  items     String // comma-separated items
+}
+
+model MessScan {
+  id        String   @id @default(cuid())
+  studentId String
+  student   Student  @relation(fields: [studentId], references: [id])
+  meal      String   // BREAKFAST | LUNCH | SNACKS | DINNER
+  date      DateTime // Date truncated to midnight
+  timestamp DateTime // Exact scan timestamp
+  flagged   Boolean  @default(false)
+
+  @@unique([studentId, meal, date])
+}

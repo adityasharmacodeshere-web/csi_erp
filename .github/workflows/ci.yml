@@ -1,0 +1,40 @@
+name: Bennett Campus ERP CI
+
+on:
+  push:
+    branches: [ main ]
+  pull_request:
+    branches: [ main ]
+
+jobs:
+  build-and-test:
+    runs-on: ubuntu-latest
+
+    steps:
+      - name: Checkout code
+        uses: actions/checkout@v4
+
+      - name: Setup Node.js
+        uses: actions/setup-node@v4
+        with:
+          node-version: 20
+          cache: 'npm'
+
+      - name: Install dependencies
+        run: npm ci
+
+      - name: Setup Environment
+        run: |
+          cp .env.example .env
+
+      - name: Setup Database & Seed
+        run: |
+          npx prisma db push
+          npx tsx prisma/seed.ts
+
+      - name: Run Automated Verification Suite
+        run: |
+          npx tsx prisma/verify.ts
+
+      - name: Build Next.js Application
+        run: npm run build
