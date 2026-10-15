@@ -2,7 +2,7 @@
 
 import React, { useState } from 'react';
 import { useRouter } from 'next/navigation';
-import { Lock, UserCheck, ShieldCheck, ArrowRight, AlertCircle, Sparkles } from 'lucide-react';
+import { UserCheck, ShieldCheck, ArrowRight, AlertCircle } from 'lucide-react';
 
 export default function LoginPage() {
   const router = useRouter();
@@ -29,19 +29,13 @@ export default function LoginPage() {
         throw new Error(data.error || 'Invalid enrollment number or password');
       }
 
-      router.push('/dashboard');
-      router.refresh();
+      // Hard redirect to dashboard to ensure session cookies are immediately available
+      window.location.href = '/dashboard';
     } catch (err: any) {
       setError(err.message || 'Invalid enrollment number or password');
     } finally {
       setLoading(false);
     }
-  };
-
-  const autofillDemo = () => {
-    setEnrollmentNo('s26cseu2109');
-    setPassword('Aditya@123');
-    setError(null);
   };
 
   return (
@@ -96,7 +90,7 @@ export default function LoginPage() {
               </div>
             )}
 
-            <form onSubmit={handleLogin} className="space-y-4">
+            <form onSubmit={handleLogin} className="space-y-5">
               <div>
                 <label className="block text-xs font-bold uppercase tracking-wider text-slate-700 mb-1.5">
                   Enrollment Number
@@ -107,7 +101,8 @@ export default function LoginPage() {
                     required
                     value={enrollmentNo}
                     onChange={(e) => setEnrollmentNo(e.target.value)}
-                    placeholder="e.g. s26cseu2109"
+                    placeholder="s26cseuxxxx"
+                    autoComplete="username"
                     className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-sm text-slate-900 font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#002147] focus:border-transparent transition-all placeholder:text-slate-400"
                   />
                 </div>
@@ -124,6 +119,7 @@ export default function LoginPage() {
                     value={password}
                     onChange={(e) => setPassword(e.target.value)}
                     placeholder="••••••••••••"
+                    autoComplete="current-password"
                     className="w-full bg-slate-50 border border-slate-300 rounded-xl px-4 py-3 text-sm text-slate-900 font-medium focus:bg-white focus:outline-none focus:ring-2 focus:ring-[#002147] focus:border-transparent transition-all placeholder:text-slate-400"
                   />
                 </div>
@@ -133,7 +129,7 @@ export default function LoginPage() {
                 <button
                   type="submit"
                   disabled={loading}
-                  className="w-full bg-[#da2032] hover:bg-[#a70b1a] text-white font-bold py-3.5 px-4 rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center space-x-2 disabled:opacity-60"
+                  className="w-full bg-[#da2032] hover:bg-[#a70b1a] text-white font-bold py-3.5 px-4 rounded-xl shadow-lg hover:shadow-xl transition-all flex items-center justify-center space-x-2 disabled:opacity-60 cursor-pointer"
                 >
                   {loading ? (
                     <span className="inline-flex items-center gap-2">
@@ -149,23 +145,6 @@ export default function LoginPage() {
                 </button>
               </div>
             </form>
-
-            {/* Quick Demo Autofill Box */}
-            <div className="mt-6 pt-5 border-t border-slate-100 bg-slate-50 -mx-8 -mb-8 px-8 py-5">
-              <div className="flex items-center justify-between">
-                <div className="text-[11px] text-slate-500 font-medium">
-                  Default Demo Student: <code className="bg-slate-200 px-1 py-0.5 rounded text-slate-800">s26cseu2109</code>
-                </div>
-                <button
-                  type="button"
-                  onClick={autofillDemo}
-                  className="text-xs font-bold text-[#00418d] hover:text-[#002147] flex items-center gap-1 hover:underline"
-                >
-                  <Sparkles className="w-3.5 h-3.5 text-amber-500" />
-                  <span>Autofill</span>
-                </button>
-              </div>
-            </div>
           </div>
         </div>
       </main>

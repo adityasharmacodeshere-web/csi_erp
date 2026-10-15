@@ -2,7 +2,7 @@ import { NextRequest, NextResponse } from 'next/server';
 import bcrypt from 'bcryptjs';
 import prisma from '@/lib/prisma';
 import { getSession } from '@/lib/session';
-import { checkLoginRateLimit, resetLoginRateLimit } from '@/lib/rate-limit';
+import { isRateLimited, recordFailedAttempt, resetLoginRateLimit } from '@/lib/rate-limit';
 
 export async function POST(req: NextRequest) {
   try {
@@ -12,7 +12,8 @@ export async function POST(req: NextRequest) {
       req.headers.get('x-real-ip') ||
       '127.0.0.1';
 
-    const rateCheck = checkLoginRateLimit(ip);
+    // Check if IP is currently blocked
+    const rateCheck = isRateLimited(ip);
     if (!rateCheck.allowed) {
       return NextResponse.json(
         {
@@ -28,6 +29,7 @@ export async function POST(req: NextRequest) {
     const { enrollmentNo, password } = body;
 
     if (!enrollmentNo || !password) {
+      recordFailedAttempt(ip);
       return NextResponse.json(
         { error: 'Invalid enrollment number or password' },
         { status: 400 }
@@ -41,6 +43,7 @@ export async function POST(req: NextRequest) {
     });
 
     if (!student) {
+      recordFailedAttempt(ip);
       return NextResponse.json(
         { error: 'Invalid enrollment number or password' },
         { status: 401 }
@@ -49,6 +52,7 @@ export async function POST(req: NextRequest) {
 
     const isValidPassword = await bcrypt.compare(password, student.passwordHash);
     if (!isValidPassword) {
+      recordFailedAttempt(ip);
       return NextResponse.json(
         { error: 'Invalid enrollment number or password' },
         { status: 401 }
@@ -58,7 +62,7 @@ export async function POST(req: NextRequest) {
     // Reset rate limiter upon successful login
     resetLoginRateLimit(ip);
 
-    // Save session
+    // Save iron-session
     const session = await getSession();
     session.isLoggedIn = true;
     session.studentId = student.id;
